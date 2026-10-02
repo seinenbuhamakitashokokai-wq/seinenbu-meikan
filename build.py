@@ -11,7 +11,7 @@ CREDENTIALS_JSON = os.environ.get('GOOGLE_CREDENTIALS_JSON')
 
 # ======== 設定項目 ========
 SPREADSHEET_ID = '1rsiwmm1CeZYHQmdy2pPqlRaD4s1KAEyCeKka5kMVmbA'
-RANGE_NAME = 'フォームの回答 1!A:Z' 
+RESPONSE_SHEET_PREFIX = 'フォームの回答'
 # ========================
 
 def get_sheet_data():
@@ -43,21 +43,26 @@ def get_sheet_data():
     service = build('sheets', 'v4', credentials=creds)
     drive_service = build('drive', 'v3', credentials=creds)
     
-    result = service.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME).execute()
-    values = result.get('values', [])
-    
-    if not values:
-        return []
-    
-    headers = values[0]
+    # 「フォームの回答 1」(写真あり版) と「フォームの回答 2」(写真なし版) など、回答タブをすべて読む
+    sheet_metadata = service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
+    tab_titles = sorted(s['properties']['title'] for s in sheet_metadata.get('sheets', [])
+                        if s['properties']['title'].startswith(RESPONSE_SHEET_PREFIX))
+
+    raw_rows = []
+    for title in tab_titles:
+        result = service.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"'{title}'!A:Z").execute()
+        values = result.get('values', [])
+        if not values:
+            continue
+        headers = values[0]
+        for row in values[1:]:
+            row_data = row + [''] * (len(headers) - len(row))
+            raw_rows.append(dict(zip(headers, row_data)))
+
     members = []
     timestamp_str = datetime.now().strftime('%Y%m%d%H%M')
 
-    # デバッグ用に取得したヘッダーを表示
-    
-    for row in values[1:]:
-        row_data = row + [''] * (len(headers) - len(row))
-        member_raw = dict(zip(headers, row_data))
+    for member_raw in raw_rows:
         member = {}
         
         # --- 超堅牢なマッピング（キーワード部分一致で探す） ---
