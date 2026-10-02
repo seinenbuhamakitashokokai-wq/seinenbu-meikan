@@ -5,7 +5,7 @@ import os
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-creds_json_path = os.path.join(os.path.dirname(__file__), 'stone-citizen-492915-a0-36bd2df513d6.json')
+creds_json_path = os.path.join(os.path.dirname(__file__), 'seinenbu-meikan-510407-41ea07feabda.json')
 SPREADSHEET_ID = '1rsiwmm1CeZYHQmdy2pPqlRaD4s1KAEyCeKka5kMVmbA'
 
 try:

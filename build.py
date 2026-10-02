@@ -25,7 +25,7 @@ def get_sheet_data():
             ]
         )
     else:
-        local_json_path = os.path.join(os.path.dirname(__file__), 'stone-citizen-492915-a0-36bd2df513d6.json')
+        local_json_path = os.path.join(os.path.dirname(__file__), 'seinenbu-meikan-510407-41ea07feabda.json')
         if os.path.exists(local_json_path):
             with open(local_json_path, 'r', encoding='utf-8') as f:
                 creds_dict = json.load(f)

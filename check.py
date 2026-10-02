@@ -7,7 +7,7 @@ from googleapiclient.discovery import build
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-creds_json_path = os.path.join(os.path.dirname(__file__), 'stone-citizen-492915-a0-36bd2df513d6.json')
+creds_json_path = os.path.join(os.path.dirname(__file__), 'seinenbu-meikan-510407-41ea07feabda.json')
 SPREADSHEET_ID = '1rsiwmm1CeZYHQmdy2pPqlRaD4s1KAEyCeKka5kMVmbA'
 
 try:
