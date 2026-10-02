@@ -10,7 +10,7 @@ from jinja2 import Environment, FileSystemLoader
 CREDENTIALS_JSON = os.environ.get('GOOGLE_CREDENTIALS_JSON')
 
 # ======== 設定項目 ========
-SPREADSHEET_ID = '1t6ORbLCFnlr9_cCEE3A-iBK3PV4W4zAOvlNlLIX6ZDk'
+SPREADSHEET_ID = '1rsiwmm1CeZYHQmdy2pPqlRaD4s1KAEyCeKka5kMVmbA'
 RANGE_NAME = 'フォームの回答 1!A:Z' 
 # ========================
 

@@ -16,7 +16,7 @@ function triggerGitHubAction() {
   // GitHubのパーソナルアクセストークン（Settings > Developer settings > PAT(Classic) で「repo」権限を付与して発行）
   var personalAccessToken = 'YOUR_GITHUB_PAT_HERE';
   // オーナー名 (GitHubのユーザー名 または Organization名)
-  var owner = 'YOUR_GITHUB_USERNAME';
+  var owner = 'seinenbuhamakitashokokai-wq';
   // リポジトリ名
   var repo = 'seinenbu-meikan';
   // ==========================
