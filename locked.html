@@ -40,9 +40,10 @@
             margin-bottom: 28px;
         }
         .lock-card p { font-size: 0.9rem; margin-bottom: 12px; }
-        input[type="password"] {
+        .pass-field { position: relative; }
+        #lock-pass {
             width: 100%;
-            padding: 12px;
+            padding: 12px 64px 12px 12px;
             font-size: 1rem;
             border: 1px solid var(--accent-color);
             border-radius: 6px;
@@ -57,7 +58,7 @@
             margin: 12px 0 16px;
             font-size: 0.85rem;
         }
-        button {
+        button[type="submit"] {
             width: 100%;
             padding: 12px;
             font-size: 1rem;
@@ -66,6 +67,19 @@
             border-radius: 6px;
             background: var(--accent-color);
             color: var(--primary-color);
+            cursor: pointer;
+        }
+        .pass-toggle {
+            position: absolute;
+            top: 50%;
+            right: 6px;
+            transform: translateY(-50%);
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            border: none;
+            border-radius: 4px;
+            background: var(--second-color);
+            color: #fff;
             cursor: pointer;
         }
         button:disabled { opacity: 0.6; cursor: wait; }
@@ -78,7 +92,10 @@
         <h1>青年部名鑑</h1>
         <div class="sub">- The Digital -</div>
         <p>合言葉を入力してください</p>
-        <input type="password" id="lock-pass" autocomplete="current-password" required>
+        <div class="pass-field">
+            <input type="password" id="lock-pass" autocomplete="current-password" required>
+            <button type="button" class="pass-toggle" id="lock-toggle" aria-pressed="false">表示</button>
+        </div>
         <label class="remember"><input type="checkbox" id="lock-remember" checked> この端末で記憶する</label>
         <button type="submit" id="lock-button">開く</button>
         <div class="error" id="lock-error" role="alert"></div>
@@ -120,13 +137,23 @@
             return null;
         }
 
+        const passInput = document.getElementById('lock-pass');
+        const toggle = document.getElementById('lock-toggle');
+        toggle.addEventListener('click', () => {
+            const show = passInput.type === 'password';
+            passInput.type = show ? 'text' : 'password';
+            toggle.textContent = show ? '隠す' : '表示';
+            toggle.setAttribute('aria-pressed', String(show));
+            passInput.focus();
+        });
+
         const form = document.getElementById('lock-form');
         const button = document.getElementById('lock-button');
         const error = document.getElementById('lock-error');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const pass = document.getElementById('lock-pass').value;
+            const pass = passInput.value;
             button.disabled = true;
             button.textContent = '確認中…';
             error.textContent = '';
