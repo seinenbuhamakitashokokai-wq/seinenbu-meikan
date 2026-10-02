@@ -13,8 +13,15 @@ function onFormSubmitTrigger(e) {
  */
 function triggerGitHubAction() {
   // ======== 設定項目 ========
-  // GitHubのパーソナルアクセストークン（Settings > Developer settings > PAT(Classic) で「repo」権限を付与して発行）
-  var personalAccessToken = 'YOUR_GITHUB_PAT_HERE';
+  // GitHubのパーソナルアクセストークン
+  // （Fine-grained tokenで、このリポジトリのみ「Contents: Read and write」を付与して発行）
+  // コードには書かず、Apps Scriptの「プロジェクトの設定 > スクリプト プロパティ」に
+  // プロパティ名 GITHUB_PAT で登録してください。
+  var personalAccessToken = PropertiesService.getScriptProperties().getProperty('GITHUB_PAT');
+  if (!personalAccessToken) {
+    Logger.log("Error: スクリプト プロパティ GITHUB_PAT が設定されていません。");
+    return;
+  }
   // オーナー名 (GitHubのユーザー名 または Organization名)
   var owner = 'seinenbuhamakitashokokai-wq';
   // リポジトリ名
