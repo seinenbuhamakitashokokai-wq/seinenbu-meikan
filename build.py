@@ -4,6 +4,7 @@ import re
 import json
 import base64
 import unicodedata
+from datetime import datetime
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from jinja2 import Environment, FileSystemLoader
@@ -25,6 +26,53 @@ PHOTO_MAX_PX = 800
 BACKGROUND_MAX_PX = 1600
 PBKDF2_ITERATIONS = 600000
 # ========================
+
+NAME_KEYWORDS = ('氏名', 'お名前')
+PHOTO_KEYWORDS = ('ベストショット', '写真')
+
+def find_value(row, keywords):
+    """見出しにキーワードを含む最初の列の (見出し, 値) を返す"""
+    for k, v in row.items():
+        if any(w in k for w in keywords):
+            return k, v
+    return None, ''
+
+def parse_timestamp(row):
+    try:
+        return datetime.strptime(row.get('タイムスタンプ', ''), '%Y/%m/%d %H:%M:%S')
+    except ValueError:
+        return datetime.min
+
+def merge_resubmissions(raw_rows):
+    """同じ氏名の回答は一番新しいものだけ残す。新しい回答に写真がなければ前の写真を引き継ぐ。
+    表示順は、その人が最初に登録した位置のまま。"""
+    merged = []
+    index_by_name = {}
+    for row in raw_rows:
+        _, name = find_value(row, NAME_KEYWORDS)
+        # 「山田 太郎」「山田太郎」、全角・半角の違いは同じ人として扱う
+        key = re.sub(r'\s+', '', unicodedata.normalize('NFKC', name))
+        if not key:
+            merged.append(row)
+            continue
+        if key not in index_by_name:
+            index_by_name[key] = len(merged)
+            merged.append(row)
+            continue
+
+        i = index_by_name[key]
+        # タイムスタンプが同じ（または読めない）場合は、後から読んだ行を新しい回答とみなす
+        if parse_timestamp(row) >= parse_timestamp(merged[i]):
+            newer, older = row, merged[i]
+        else:
+            newer, older = merged[i], row
+        photo_key, photo = find_value(newer, PHOTO_KEYWORDS)
+        _, old_photo = find_value(older, PHOTO_KEYWORDS)
+        if not photo and old_photo:
+            newer = dict(newer)
+            newer[photo_key or '写真'] = old_photo
+        merged[i] = newer
+    return merged
 
 def to_data_uri(data, mime='image/jpeg'):
     return f"data:{mime};base64,{base64.b64encode(data).decode('ascii')}"
@@ -107,6 +155,7 @@ def get_sheet_data():
         for row in values[1:]:
             row_data = row + [''] * (len(headers) - len(row))
             raw_rows.append(dict(zip(headers, row_data)))
+    raw_rows = merge_resubmissions(raw_rows)
 
     members = []
 
