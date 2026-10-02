@@ -261,6 +261,26 @@ html {
     white-space: pre-wrap; /* 改行をそのまま反映 */
 }
 
+/* ログアウト（トップ画面の右上） */
+.logout-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 6px 12px;
+    background: rgba(13, 27, 42, 0.5);
+    border: 1px solid rgba(224, 169, 109, 0.6);
+    border-radius: 6px;
+    color: var(--accent-color);
+    font-family: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    background: var(--accent-color);
+    color: var(--primary-color);
+}
+
 /* 固定ナビゲーションボタン (画面左端のタブ風) */
 .nav-buttons {
     position: fixed;

@@ -103,4 +103,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // 初期状態でボタンを更新
         setTimeout(updateButtons, 300); // レイアウト完了後に実行
     }
+
+    // ログアウト：記憶した合言葉を消して、合言葉の入力画面に戻る
+    // （キー名は locked.html の STORAGE_KEY と同じ）
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            try { localStorage.removeItem('seinenbu-meikan-pass'); } catch (e) { /* 記憶していない環境 */ }
+            location.reload();
+        });
+    }
 });
