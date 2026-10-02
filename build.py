@@ -3,6 +3,7 @@ import io
 import re
 import json
 import base64
+import unicodedata
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from jinja2 import Environment, FileSystemLoader
@@ -48,8 +49,13 @@ def inline_css(path):
     return re.sub(r"url\('\./([^']+)'\)",
                   lambda m: f"url('{image_data_uri(m.group(1), BACKGROUND_MAX_PX)}')", css)
 
+def normalize_password(password):
+    # ひらがな等の濁点の表現ゆれや前後の空白で開けなくならないように揃える（locked.html と同じ処理）
+    return unicodedata.normalize('NFC', password).strip()
+
 def encrypt_page(html, password):
     """AES-GCM で暗号化（鍵は合言葉から PBKDF2 で作る）。locked.html のJSで復号する"""
+    password = normalize_password(password)
     salt, iv = os.urandom(16), os.urandom(12)
     key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt,
                      iterations=PBKDF2_ITERATIONS).derive(password.encode('utf-8'))

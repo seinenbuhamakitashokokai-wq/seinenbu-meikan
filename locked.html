@@ -91,9 +91,12 @@
         const payload = JSON.parse(document.getElementById('payload').textContent);
         const fromBase64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 
+        // build.py の normalize_password と同じ処理（濁点の表現ゆれ・前後の空白を揃える）
+        const normalizePass = pass => pass.normalize('NFC').trim();
+
         async function decryptPage(pass) {
             const baseKey = await crypto.subtle.importKey(
-                'raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+                'raw', new TextEncoder().encode(normalizePass(pass)), 'PBKDF2', false, ['deriveKey']);
             const key = await crypto.subtle.deriveKey(
                 { name: 'PBKDF2', salt: fromBase64(payload.salt), iterations: payload.iterations, hash: 'SHA-256' },
                 baseKey, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
