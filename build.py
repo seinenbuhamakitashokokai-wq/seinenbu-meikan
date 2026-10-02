@@ -225,9 +225,8 @@ def get_sheet_data():
                 
                 if os.path.exists(local_path):
                     member['photo_url'] = image_data_uri(local_path, PHOTO_MAX_PX)
-                else:
-                    # ダウンロード不可時のフォールバック
-                    member['photo_url'] = f"https://drive.google.com/thumbnail?id={file_id}&sz=w800"
+                # ダウンロードできない写真（サービスアカウントに未共有など）はデフォルト画像にする。
+                # 写真は非公開なので、Driveのリンクを載せても表示されない
             
         members.append(member)
         
