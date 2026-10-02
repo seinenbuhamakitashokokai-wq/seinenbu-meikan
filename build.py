@@ -1,18 +1,61 @@
 import os
+import io
+import re
 import json
-import requests
-from datetime import datetime
+import base64
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from jinja2 import Environment, FileSystemLoader
+from PIL import Image, ImageOps
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 # Github Secretsから環境変数として渡される認証情報
 CREDENTIALS_JSON = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+# サイトを開くための合言葉（Github Secrets の SITE_PASSWORD）
+SITE_PASSWORD = os.environ.get('SITE_PASSWORD')
 
 # ======== 設定項目 ========
 SPREADSHEET_ID = '1rsiwmm1CeZYHQmdy2pPqlRaD4s1KAEyCeKka5kMVmbA'
 RESPONSE_SHEET_PREFIX = 'フォームの回答'
+OUTPUT_DIR = 'dist'
+PHOTO_MAX_PX = 800
+BACKGROUND_MAX_PX = 1600
+PBKDF2_ITERATIONS = 600000
 # ========================
+
+def to_data_uri(data, mime='image/jpeg'):
+    return f"data:{mime};base64,{base64.b64encode(data).decode('ascii')}"
+
+def image_data_uri(path, max_px):
+    """画像を縮小してページに埋め込む（画像ファイルを公開せず、ページごと暗号化するため）"""
+    try:
+        with Image.open(path) as img:
+            img = ImageOps.exif_transpose(img).convert('RGB')
+            img.thumbnail((max_px, max_px))
+            buf = io.BytesIO()
+            img.save(buf, 'JPEG', quality=80, optimize=True)
+            return to_data_uri(buf.getvalue())
+    except Exception as e:
+        print(f"Resize error for {path}: {e}")
+        with open(path, 'rb') as f:
+            return to_data_uri(f.read())
+
+def inline_css(path):
+    with open(path, encoding='utf-8') as f:
+        css = f.read()
+    return re.sub(r"url\('\./([^']+)'\)",
+                  lambda m: f"url('{image_data_uri(m.group(1), BACKGROUND_MAX_PX)}')", css)
+
+def encrypt_page(html, password):
+    """AES-GCM で暗号化（鍵は合言葉から PBKDF2 で作る）。locked.html のJSで復号する"""
+    salt, iv = os.urandom(16), os.urandom(12)
+    key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt,
+                     iterations=PBKDF2_ITERATIONS).derive(password.encode('utf-8'))
+    data = AESGCM(key).encrypt(iv, html.encode('utf-8'), None)
+    b64 = lambda b: base64.b64encode(b).decode('ascii')
+    return {'salt': b64(salt), 'iv': b64(iv), 'iterations': PBKDF2_ITERATIONS, 'data': b64(data)}
 
 def get_sheet_data():
     creds = None
@@ -60,7 +103,6 @@ def get_sheet_data():
             raw_rows.append(dict(zip(headers, row_data)))
 
     members = []
-    timestamp_str = datetime.now().strftime('%Y%m%d%H%M')
 
     for member_raw in raw_rows:
         member = {}
@@ -127,7 +169,7 @@ def get_sheet_data():
                         pass
                 
                 if os.path.exists(local_path):
-                    member['photo_url'] = f"./{local_path}?v={timestamp_str}"
+                    member['photo_url'] = image_data_uri(local_path, PHOTO_MAX_PX)
                 else:
                     # ダウンロード不可時のフォールバック
                     member['photo_url'] = f"https://drive.google.com/thumbnail?id={file_id}&sz=w800"
@@ -137,13 +179,22 @@ def get_sheet_data():
     return members
 
 def main():
+    # 合言葉がないまま暗号化せずに公開してしまわないよう、ここで止める
+    if not SITE_PASSWORD:
+        raise SystemExit("Error: SITE_PASSWORD is not set.")
+
     members = get_sheet_data()
     env = Environment(loader=FileSystemLoader('.'))
-    template = env.get_template('template.html')
-    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-    html_out = template.render(members=members, timestamp=timestamp)
-    with open('index.html', 'w', encoding='utf-8-sig') as f:
-        f.write(html_out)
+    with open('script.js', encoding='utf-8') as f:
+        js = f.read()
+    html_out = env.get_template('template.html').render(
+        members=members, css=inline_css('style.css'), js=js,
+        default_photo=image_data_uri('hiryukun.JPG', PHOTO_MAX_PX))
+
+    payload = json.dumps(encrypt_page(html_out, SITE_PASSWORD))
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    with open(os.path.join(OUTPUT_DIR, 'index.html'), 'w', encoding='utf-8') as f:
+        f.write(env.get_template('locked.html').render(payload=payload))
     print("Build Success.")
 
 if __name__ == '__main__':

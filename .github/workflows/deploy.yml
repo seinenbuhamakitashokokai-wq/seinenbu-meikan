@@ -37,9 +37,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Build site (Generate index.html)
+      - name: Build site (Generate encrypted dist/index.html)
         env:
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
         run: python build.py
 
       - name: Setup Pages
@@ -48,7 +49,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          # 暗号化したページだけを公開する（写真やソースは公開しない）
+          path: 'dist'
 
       - name: Deploy to GitHub Pages
         id: deployment

@@ -8,3 +8,7 @@ __pycache__/
 
 # Downloaded files
 images/
+
+# Build output (contains member data; encrypted copy is deployed by Actions)
+dist/
+index.html

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noimageindex">
     <title>浜北商工会 青年部名鑑 -The Digital-</title>
-    <link rel="stylesheet" href="style.css?v={{ timestamp }}">
+    <style>{{ css }}</style>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -37,7 +37,7 @@
                     <div class="member-image-wrapper">
                         {% set img_url = member.photo_url %}
                         {% if not img_url %}
-                            {% set img_url = './hiryukun.JPG' %}
+                            {% set img_url = default_photo %}
                         {% endif %}
                         <img src="{{ img_url }}" alt="写真" class="member-image">
                     </div>
@@ -97,6 +97,6 @@
         {% endfor %}
     </div>
 
-    <script src="script.js"></script>
+    <script>{{ js }}</script>
 </body>
 </html>
