@@ -84,7 +84,6 @@
         }
         button:disabled { opacity: 0.6; cursor: wait; }
         .error { color: #ff8a80; min-height: 1.4em; margin-top: 12px; font-size: 0.9rem; }
-        .note { margin-top: 24px; font-size: 0.75rem; opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -99,7 +98,6 @@
         <label class="remember"><input type="checkbox" id="lock-remember" checked> この端末で記憶する</label>
         <button type="submit" id="lock-button">開く</button>
         <div class="error" id="lock-error" role="alert"></div>
-        <div class="note">合言葉は青年部の全体LINEでご確認ください</div>
     </form>
 
     <script id="payload" type="application/json">{{ payload }}</script>
